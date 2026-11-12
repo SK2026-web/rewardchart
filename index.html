@@ -126,6 +126,12 @@ body.fletcher .tile{border-radius:22px}body.fletcher .tile.on{background:#ff7a1a
 .who.h{background:repeating-conic-gradient(#4aa02c 0 25%,#3f8f2a 0 50%) 0 0/24px 24px;border-radius:0;text-shadow:3px 3px 0 #0008}
 .who.f{background:linear-gradient(#2b7de9,#1b4f9e);border-style:dashed;text-shadow:2px 2px 0 #0008}
 .bar i:nth-child(10n){margin-right:4px}
+.cp{height:12px;background:#0006;border-radius:6px;overflow:hidden;margin:6px 0}.cp i{display:block;height:100%;background:var(--ac2)}
+.nav .back{padding:6px 2px}
+.lk{margin:auto;text-align:center;width:min(320px,92vw)}
+.dots i{display:inline-block;width:18px;height:18px;border-radius:50%;border:3px solid var(--fg);margin:0 6px}.dots i.f{background:var(--fg)}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.pad button{font:inherit;font-size:28px;min-height:64px;border-radius:14px;border:3px solid var(--fg);background:var(--card);color:var(--fg);cursor:pointer}
 </style>
 </head>
 <body>
@@ -136,18 +142,18 @@ var DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 var KIDS={
 heath:{name:'Heath',cls:'heath',emoji:'⛏️',unit:'Emeralds',unitIc:'💎',pet:['🥚','🐣','🐔','🐷','🐺','🐉'],stk:['💎','⛏️','🗡️','🛡️','🏹','🧪','🐉','🍎','🔥','🦴','🧱','🌳'],
  titles:['Block Beginner','Wood Chopper','Stone Miner','Iron Crafter','Diamond Legend'],ci:'⛏️',cico:'🧰',chest:'loot chest',t:{start:'Hi Heath! Time to mine some chores!',more:function(n){return n+' more chores to unlock the loot chest!'},ready:'Loot chest unlocked! Open it!',fin:'Quest complete! Great mining!'},
- chores:[['📖','Nightly reader'],['🛏️','Make bed'],['🧸','Tidy up toys'],['🧹','Tidy up bedroom'],['🍽️','Table & dishes'],['🦷','Brush teeth a.m.'],['🌙','Brush teeth p.m.'],['🛁','Bath or shower'],['😴','Bed at 7pm (read or sleep)']],
+ chores:[['📖','Nightly reader'],['🛏️','Make bed'],['🧸','Tidy up toys (around the house)'],['🧹','Tidy up bedroom'],['🍽️','Table & dishes'],['🦷','Brush teeth a.m.'],['🌙','Brush teeth p.m.'],['🛁','Bath or shower'],['😴','Bed at 7pm (read or sleep)'],['👕','Get dressed for the day',1]],
  goals:[['❤️','Be respectful'],['🛠️','Help others'],['💬','Use kind words'],['🤝','Share & take turns'],['🌟','Be patient & understanding']],
  rewards:[['🎬','Pick a family movie',10],['📱','Bag an iPad (30 min)',20],['⏰','Stay up 15 min late',30],['🍨','Dessert after dinner',40],['🎮','Nintendo (30 min)',50],['🍕','Choose dinner',60],['🗺️','Family outing or $5',70]]},
 fletcher:{name:'Fletcher',cls:'fletcher',emoji:'🏁',unit:'Nitro',unitIc:'💰',pet:['🛴','🚲','🛵','🏍️','🚙','🚛'],stk:['🏍️','🚛','🏁','🔥','⚡','🏆','🥇','💥','🚨','🏔️'],
  titles:['Rookie Rider','Dirt Biker','Mud Crusher','Stunt Champion','Monster Truck King'],ci:'🏁',cico:'📦',chest:'nitro crate',t:{start:'Hi Fletcher! Rev up and start your chores!',more:function(n){return n+' more to fuel the nitro crate!'},ready:'Nitro crate ready! Open it!',fin:'Race won! See you tomorrow!'},
- chores:[['📖','Nightly reader'],['🛏️','Make bed'],['🧸','Tidy up toys'],['🧹','Tidy up bedroom'],['🍽️','Table & dishes'],['🦷','Brush teeth a.m.'],['🌙','Brush teeth p.m.'],['🚽','Poo on the toilet']],
+ chores:[['📖','Nightly reader'],['🛏️','Make bed'],['🧸','Tidy up toys (around the house)'],['🧹','Tidy up bedroom'],['🍽️','Table & dishes'],['🦷','Brush teeth a.m.'],['🌙','Brush teeth p.m.'],['🚽','Poo on the toilet'],['😴','Bed at 7pm (read or sleep)'],['👕','Get dressed for the day',1]],
  goals:[['❤️','Be respectful'],['🛠️','Help others'],['💬','Use kind words'],['🤝','Share & take turns'],['🌟','Be patient & understanding']],
  rewards:[['🎬','Pick a family movie',10],['📱','Bag an iPad (30 min)',20],['⏰','Stay up 15 min late',30],['🍨','Dessert after dinner',40],['🎮','Nintendo (30 min)',50],['🍕','Choose dinner',60],['🗺️','Family outing or $5',70]]}
 };
 var S=load();
 var cur=null,tab='main';
-function fresh(){return {chores:{},stars:[0,0,0,0,0],claimed:[0,0,0,0,0,0,0],opened:{},stickers:[],bd:{},xpBank:0,coinVal:0.2,goal:20,paid:0}}
+function fresh(){return {chores:{},stars:[0,0,0,0,0],claimed:[0,0,0,0,0,0,0],opened:{},stickers:[],bd:{},tot:{ch:0,kd:0,pd:0,pw:0,n:{}},ws:[0,0,0,0,0],wid:'',wn:0,cl:[],cd:[],tr:[],xpBank:0,coinVal:0.2,goal:20,paid:0}}
 function load(){var d;try{d=JSON.parse(localStorage.getItem('chorequest-v1'))}catch(e){}
  d=d||{};['heath','fletcher'].forEach(function(k){d[k]=Object.assign(fresh(),d[k]||{})});return d}
 var DB=null,wt={};
@@ -158,7 +164,9 @@ function todayIdx(){return (new Date().getDay()+6)%7}
 function chk(k){return Object.keys(S[k].chores).length}
 function stars(k){return S[k].stars.reduce(function(a,b){return a+b},0)}
 function xp(k){return chk(k)*10+stars(k)*15+perfect(k)*20+(S[k].xb||0)}
-function perfect(k){var n=0;for(var d=0;d<7;d++){var all=true;KIDS[k].chores.forEach(function(c,i){if(!S[k].chores[d+'-'+i])all=false});if(all)n++}return n}
+var ORD=['Brush teeth a.m.','Get dressed for the day','Make bed','Tidy up toys (around the house)','Tidy up bedroom','Nightly reader','Table & dishes','Poo on the toilet','Bath or shower','Brush teeth p.m.','Bed at 7pm (read or sleep)'];
+function dayIdx(k,d){var C=KIDS[k].chores,a=[];function o(i){var j=ORD.indexOf(C[i][1]);return j<0?99+i:j}C.forEach(function(c,i){if(!c[2]||d<5)a.push(i)});return a.sort(function(x,y){return o(x)-o(y)})}
+function perfect(k){var n=0;for(var d=0;d<7;d++){var all=true;dayIdx(k,d).forEach(function(i){if(!S[k].chores[d+'-'+i])all=false});if(all)n++}return n}
 function money(k){return Math.max(0,S[k].xpBank+chk(k)*S[k].coinVal-S[k].paid)}
 function beep(f){try{var a=new (window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.frequency.value=f;o.type='square';g.gain.value=.05;o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+.12)}catch(e){}}
 function burst(e,ic){var r=e&&e.target&&e.target.getBoundingClientRect?e.target.getBoundingClientRect():{left:200,top:300,width:0,height:0};
@@ -171,45 +179,90 @@ function speak(t){if(!VOICE)return;try{var u=new SpeechSynthesisUtterance(t);u.r
 function cheer(){var a=['Great job','Awesome','Nice work','You rock','Boom'];return a[Math.floor(Math.random()*a.length)]+' '+KIDS[cur].name+'!'}
 function wow(ic,t){var d=document.createElement('div');d.className='wow';d.innerHTML='<b>'+ic+'</b>'+esc(t)+'<small>Tap to keep going</small>';d.onclick=function(){d.remove()};document.body.appendChild(d);speak(t);beep(523);setTimeout(function(){beep(784)},150);setTimeout(function(){beep(1046)},300)}
 function curPet(){var p=KIDS[cur].pet;return p[Math.min(p.length-1,Math.floor(xp(cur)/100))]}
-function sayFor(k){var K=KIDS[k],st=S[k],ti=todayIdx(),d=0;K.chores.forEach(function(c,i){if(st.chores[ti+'-'+i])d++});var n=K.chores.length-d;
+function sayFor(k){var K=KIDS[k],st=S[k],ti=todayIdx(),d=0;var ix=dayIdx(k,ti);ix.forEach(function(i){if(st.chores[ti+'-'+i])d++});var n=ix.length-d;
  if(d==0)return K.t.start;if(n>0)return K.t.more(n);return st.opened[ti]?K.t.fin:K.t.ready}
-function badgeDefs(k){var st=S[k],H=k=='heath',lv=Math.floor(xp(k)/100)+1;return [
+function tot(k){var q=S[k];q.tot=q.tot||{};var t=q.tot;t.ch=t.ch||0;t.kd=t.kd||0;t.pd=t.pd||0;t.pw=t.pw||0;t.n=t.n||{};return t}
+function bump(k,id,dv){var t=tot(k),nm=KIDS[k].chores[+id.split('-')[1]][1];t.ch=Math.max(0,t.ch+dv);t.n[nm]=Math.max(0,(t.n[nm]||0)+dv)}
+function bumpS(k,i,dv){var t=tot(k),q=S[k];t.kd=Math.max(0,t.kd+dv);q.ws=q.ws||[0,0,0,0,0];q.ws[i]=Math.max(0,(q.ws[i]||0)+dv)}
+function weekId(){var d=new Date(),o=(d.getDay()+6)%7,m=new Date(d.getFullYear(),d.getMonth(),d.getDate()-o);return m.getFullYear()+'-'+(m.getMonth()+1)+'-'+m.getDate()}
+function cix(k,nm){var r=-1;KIDS[k].chores.forEach(function(c,i){if(c[1]==nm)r=i});return r}
+function cnt(k,nm){var i=cix(k,nm),n=0;if(i<0)return 0;for(var d=0;d<7;d++)if(S[k].chores[d+'-'+i])n++;return n}
+function cntBoth(k,a,b){var i=cix(k,a),j=cix(k,b),n=0;if(i<0||j<0)return 0;for(var d=0;d<7;d++)if(S[k].chores[d+'-'+i]&&S[k].chores[d+'-'+j])n++;return n}
+function wsum(k){return (S[k].ws||[]).reduce(function(a,b){return a+(b||0)},0)}
+function CHS(k){var H=k=='heath',B='Bed at 7pm (read or sleep)',nn=[3,4,5,4,6,5,7],s1,s2;
+ function d(id,ic,tx,tg,f){return {id:id,ic:ic,tx:tx,tg:tg,f:f}}
+ function ws(i){return function(){return (S[k].ws||[])[i]||0}}
+ if(H){s1=nn.map(function(n){return d('bed'+n,'😴','Go to bed at 7pm on '+n+' nights',n,function(){return cnt(k,B)})});
+  s2=nn.map(function(n){return d('wash'+n,'🛁','Have a bath or shower on '+n+' days',n,function(){return cnt(k,'Bath or shower')})})}
+ else{s1=[2,3,3,4,4,5,6,7].map(function(n){return d('poo'+n,'🚽','Poo on the toilet on '+n+' days',n,function(){return cnt(k,'Poo on the toilet')})});
+  s2=nn.map(function(n){return d('teeth'+n,'🦷','Brush teeth morning AND night on '+n+' days',n,function(){return cntBoth(k,'Brush teeth a.m.','Brush teeth p.m.')})})}
+ var g=[d('g-bed','🛏️','Make your bed on 5 days',5,function(){return cnt(k,'Make bed')}),d('g-kind','💖','Earn 5 kindness stars',5,function(){return wsum(k)}),d('g-pat','🌟','Earn 3 “Be patient” stars',3,ws(4)),d('g-share','🤝','Earn 3 sharing stars',3,ws(3)),d('g-perf','🌈','Get 2 perfect days',2,function(){return perfect(k)}),d('g-read','📖','Read your nightly book on 5 days',5,function(){return cnt(k,'Nightly reader')}),d('g-help','🛠️','Earn 3 helping stars',3,ws(1)),d('g-words','💬','Earn 3 kind words stars',3,ws(2))];
+ return [s1,s2,g]}
+function defById(k,id){var r=null;CHS(k).forEach(function(sl){sl.forEach(function(c){if(!r&&c.id==id)r=c})});return r}
+function pickCl(k){var wn=S[k].wn||0;return CHS(k).map(function(a){return a[wn%a.length].id})}
+function newWeek(k){var q=S[k],t=tot(k),pf=perfect(k);q.xb=(q.xb||0)+chk(k)*10+pf*20;q.xpBank+=chk(k)*q.coinVal;t.pd+=pf;if(pf>=7)t.pw++;q.chores={};q.opened={};q.ws=[0,0,0,0,0];q.wn=(q.wn||0)+1;q.wid=weekId();q.cl=pickCl(k);q.cd=[]}
+function ensureWeek(k){var q=S[k],w=weekId();if(!q.wid){q.wid=w;q.wn=q.wn||0;q.cl=pickCl(k);q.cd=[];q.ws=q.ws||[0,0,0,0,0];return true}if(!q.cl||!q.cl.length){q.cl=pickCl(k);return true}return false}
+function badgeDefs(k){var st=S[k],H=k=='heath',lv=Math.floor(xp(k)/100)+1,t=tot(k),n=t.n,tr=(st.tr||[]).length,pw=t.pw+(perfect(k)>=7?1:0);
+ var base=[
 ['🌱','First chore',chk(k)>=1],['💪','10 chores',chk(k)>=10],['🏅','25 chores',chk(k)>=25],['🏆','Chore master',chk(k)>=35],
 ['🌈','Perfect day',perfect(k)>=1],['👑','3 perfect days',perfect(k)>=3],['🔥','Perfect week',perfect(k)>=7],
 ['⭐','First star',stars(k)>=1],['💖','10 stars',stars(k)>=10],['🌟','25 stars',stars(k)>=25],['🦸','Kind 5 ways',st.stars.every(function(n){return n>0})],
 ['🛠️','Super helper',st.stars[1]>=5],['🤝','Sharing star',st.stars[3]>=5],['🧘','Patience pro',st.stars[4]>=5],
-['📦','Opened a chest',Object.keys(st.opened).length>0],['🎒','Sticker collector',st.stickers.length>=5],['🚀','Level 3',lv>=3],[H?'💎':'🏁',H?'Diamond level 5':'Champion level 5',lv>=5]]}
-function award(k){var st=S[k];badgeDefs(k).forEach(function(b){if(b[2]&&!st.bd[b[1]]){st.bd[b[1]]=1;toast('New badge: '+b[0]+' '+b[1])}})}
-function dlg(msg,def,ok){var d=document.createElement('div');d.className='wow';d.style.fontFamily="'Nunito',system-ui,sans-serif";
- d.innerHTML='<div class="panel" style="color:var(--fg);max-width:340px;cursor:default;font-size:18px"><p style="margin:0 0 12px"></p>'+(def!==null?'<input style="font:inherit;width:100%;padding:10px;margin-bottom:12px;border-radius:8px" inputmode="decimal">':'')+'<button class="btn go" data-y>OK</button> <button class="btn" data-n>Cancel</button></div>';
+['📦','Opened a chest',Object.keys(st.opened).length>0],['🎒','Sticker collector',st.stickers.length>=5],['🚀','Level 3',lv>=3],[H?'💎':'🏁',H?'Diamond level 5':'Champion level 5',lv>=5]];
+ function tier(b,v,a){return [['🥉',b+' (Bronze)',v>=a[0]],['🥈',b+' (Silver)',v>=a[1]],['🥇',b+' (Gold)',v>=a[2]]]}
+ var x=tier('Chore Pro',t.ch,[50,150,300]).concat(tier('Kindness Hero',t.kd,[25,75,150]),tier('Perfect Days',t.pd+perfect(k),[5,15,30]));
+ if(H)x=x.concat(tier('Bedtime Hero',n['Bed at 7pm (read or sleep)']||0,[10,25,50]),tier('Squeaky Clean',n['Bath or shower']||0,[10,25,50]));
+ else x=x.concat(tier('Toilet Champ',n['Poo on the toilet']||0,[10,25,50]),tier('Sparkle Smile',(n['Brush teeth a.m.']||0)+(n['Brush teeth p.m.']||0),[20,50,100]));
+ x.push(['🎯','Trophy hunter',tr>=5],['🏆','Trophy legend',tr>=15],['🌠','Perfect week x3',pw>=3]);
+ return base.concat(x)}
+function award(k){var st=S[k];badgeDefs(k).forEach(function(b){if(b[2]&&!st.bd[b[1]]){st.bd[b[1]]=1;toast('New badge: '+b[0]+' '+b[1])}});
+ (st.cl||[]).forEach(function(id){var c=defById(k,id);if(!c)return;st.cd=st.cd||[];if(c.f()>=c.tg&&st.cd.indexOf(id)<0){st.cd.push(id);st.tr=st.tr||[];st.tr.push({ic:c.ic,tx:c.tx,w:st.wid});st.xb=(st.xb||0)+50;wow(c.ic,'Challenge complete! +50 XP')}})}
+function weeklyHtml(k){var st=S[k],H=k=='heath',cd=st.cd||[];
+ var r=(st.cl||[]).map(function(id){var c=defById(k,id);if(!c)return '';var p=Math.min(c.f(),c.tg),dn=cd.indexOf(id)>-1;return '<div class="goal"><span class="ic">'+c.ic+'</span><div class="t">'+esc(c.tx)+'<div class="cp"><i style="width:'+Math.round(100*p/c.tg)+'%"></i></div><small>'+p+' / '+c.tg+(dn?' ✅ Done! +50 XP':'')+'</small></div></div>'}).join('');
+ var tr=st.tr||[];
+ return '<div class="panel"><div class="hf" style="font-size:13px;margin-bottom:8px">'+(H?'⛏️ Mining missions':'🏁 Race challenges')+'</div>'+r+'<small>New challenges start when a grown-up starts a new week. Each one wins a trophy and 50 XP.</small></div><div class="panel" style="margin-top:10px"><div class="hf" style="font-size:13px">🏆 Trophy shelf ('+tr.length+')</div><div class="stk">'+(tr.length?tr.map(function(t){return '<span title="'+esc(t.tx)+'">'+t.ic+'</span>'}).join(' '):'Finish a challenge to win your first trophy!')+'</div></div>'}
+var UNL=false,LOCK=true,ENT='',ENT1=null;try{if(sessionStorage.getItem('cq-ok')=='1')LOCK=false}catch(e){}
+function unlock(){LOCK=false;try{sessionStorage.setItem('cq-ok','1')}catch(e){}}
+function renderLock(){document.body.className='';var np=!S.heath.pin,m=np?(ENT1===null?'Create a 4-digit passcode':'Enter it again to confirm'):'Enter the passcode',d='',i;
+ for(i=0;i<4;i++)d+='<i class="'+(i<ENT.length?'f':'')+'"></i>';
+ var k='';['1','2','3','4','5','6','7','8','9','','0','del'].forEach(function(v){k+=v===''?'<span></span>':'<button data-a="key" data-v="'+v+'" aria-label="'+(v=='del'?'Delete':v)+'">'+(v=='del'?'⌫':v)+'</button>'});
+ document.getElementById('app').innerHTML='<div class="lk"><div style="font-size:56px">🔒</div><h1 class="hf" style="font-size:20px;margin:8px 0 14px">'+m+'</h1><div class="dots">'+d+'</div><div class="pad">'+k+'</div></div>'}
+function ph(x){var h=5381,t='cq'+x,i;for(i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))|0;return 'p'+h}
+function setPin(msg,cb){dlg(msg,'',function(x){if(/^\d{4}$/.test(x)){S.heath.pin=ph(x);save();push('heath');cb()}else toast('Please use exactly 4 numbers')},1)}
+function askPin(cb){if(!S.heath.pin){setPin('Set a 4-digit grown-ups passcode',cb);return}
+ dlg('Enter the grown-ups passcode','',function(x){if(ph(x)===S.heath.pin)cb();else toast('Wrong passcode')},1)}
+function dlg(msg,def,ok,pw){var d=document.createElement('div');d.className='wow';d.style.fontFamily="'Nunito',system-ui,sans-serif";
+ d.innerHTML='<div class="panel" style="color:var(--fg);max-width:340px;cursor:default;font-size:18px"><p style="margin:0 0 12px"></p>'+(def!==null?'<input'+(pw?' type="password" maxlength="4"':'')+' style="font:inherit;width:100%;padding:10px;margin-bottom:12px;border-radius:8px" inputmode="'+(pw?'numeric':'decimal')+'">':'')+'<button class="btn go" data-y>OK</button> <button class="btn" data-n>Cancel</button></div>';
  d.querySelector('p').textContent=msg;var inp=d.querySelector('input');if(inp)inp.value=def;
  d.onclick=function(e){if(e.target.hasAttribute('data-y')){d.remove();ok(inp?inp.value:null)}else if(e.target.hasAttribute('data-n')||e.target===d)d.remove()};document.body.appendChild(d);if(inp)inp.focus()}
 function render(){
  var app=document.getElementById('app');
+ if(LOCK){renderLock();return}
  if(!cur){document.body.className='';
-  app.innerHTML='<div class="pick"><h1 class="hf">Who’s playing?</h1><p>Finish chores, show kindness, level up.</p><button class="who h" data-a="pick" data-k="heath"><span>⛏️🧱</span>Heath</button><button class="who f" data-a="pick" data-k="fletcher"><span>🏍️🚛</span>Fletcher</button></div>';return}
- var K=KIDS[cur],st=S[cur],X=xp(cur),lv=Math.floor(X/100)+1,title=K.titles[Math.min(K.titles.length-1,Math.floor((lv-1)/2))],pet=K.pet[Math.min(K.pet.length-1,lv-1)],ti=todayIdx(),done=0,n=K.chores.length,msg=sayFor(cur);
+  app.innerHTML='<div class="pick"><h1 class="hf">Who’s playing?</h1><p>Finish chores, show kindness, level up.</p><button class="who h" data-a="pick" data-k="heath"><span>⛏️🧱</span>Heath</button><button class="who f" data-a="pick" data-k="fletcher"><span>🏍️🚛</span>Fletcher</button><button class="back" data-a="lock" style="grid-column:1/-1;justify-self:center">🔒 Lock</button></div>';return}
+ if(ensureWeek(cur))save();var K=KIDS[cur],st=S[cur],X=xp(cur),lv=Math.floor(X/100)+1,title=K.titles[Math.min(K.titles.length-1,Math.floor((lv-1)/2))],pet=K.pet[Math.min(K.pet.length-1,lv-1)],ti=todayIdx(),done=0,n=dayIdx(cur,ti).length,msg=sayFor(cur);
  document.body.className=K.cls;
  var tl='';
- K.chores.forEach(function(c,i){var on=st.chores[ti+'-'+i];if(on)done++;tl+='<button class="tile'+(on?' on':'')+'" data-a="chore" data-id="'+ti+'-'+i+'" aria-pressed="'+!!on+'"><span>'+c[0]+'</span>'+esc(c[1])+(on?'<em>✔</em>':'')+'</button>'});
+ dayIdx(cur,ti).forEach(function(i){var c=K.chores[i],on=st.chores[ti+'-'+i];if(on)done++;tl+='<button class="tile'+(on?' on':'')+'" data-a="chore" data-id="'+ti+'-'+i+'" aria-pressed="'+!!on+'"><span>'+c[0]+'</span>'+esc(c[1])+(on?'<em>✔</em>':'')+'</button>'});
  var all=done==n,op=st.opened[ti];
  tl+=(all&&!op)?'<button class="tile wig" data-a="chest" style="background:var(--ac2);color:#111"><span>'+K.cico+'</span>Open '+K.chest+'!</button>':'<div class="tile cht"><span>'+(op?'📭':'🔒')+'</span>'+(op?'Opened':K.chest)+'</div>';
- var tc=(n+1)<=8?4:((n+1)<=10?5:3),kl='';
+ var tc=(n+1)<=8?4:((n+1)<=10?5:4),kl='';
  K.goals.forEach(function(g,i){kl+='<div class="kr"><span class="ic">'+g[0]+'</span><span class="t">'+esc(g[1])+'</span><span class="n">'+st.stars[i]+'</span><button class="btn go" data-a="star" data-i="'+i+'" aria-label="Add star: '+esc(g[1])+'">+⭐</button><button class="btn mn" data-a="unstar" data-i="'+i+'" aria-label="Remove a star">−</button></div>'});
  var h='<div class="hdr"><button class="back" data-a="home" aria-label="Switch child">‹</button><span class="pet">'+pet+'</span><div class="hm"><div class="hf nm">'+K.name+' · Lv '+lv+'</div><div class="xp"><i style="width:'+(X%100)+'%"></i></div><div class="msg">'+esc(msg)+'</div></div><div class="pill">⭐ '+stars(cur)+'</div><div class="pill">$'+money(cur).toFixed(2)+'</div><button class="back" data-a="voice" aria-label="Voice on or off">'+(VOICE?'🔊':'🔇')+'</button></div>'+
  '<div class="split"><section class="sec"><h2><span>'+K.ci+' CHORES</span><span>'+done+'/'+n+'</span></h2><div class="tiles" style="grid-template-columns:repeat('+tc+',1fr);grid-template-rows:repeat('+Math.ceil((n+1)/tc)+',1fr)">'+tl+'</div></section><section class="sec kind"><h2><span>💖 KINDNESS</span><span>⭐ '+stars(cur)+'</span></h2><div class="kl">'+kl+'</div></section></div>'+
- '<div class="nav"><button class="back" data-a="tab" data-t="prizes">🎁 Prizes</button><button class="back" data-a="tab" data-t="badges">🏅 Badges</button><button class="back" data-a="tab" data-t="grown">⚙️ Grown-ups</button></div>';
+ '<div class="nav"><button class="back" data-a="tab" data-t="prizes">🎁 Prizes</button><button class="back" data-a="tab" data-t="badges">🏅 Badges</button><button class="back" data-a="tab" data-t="weekly">🎯 Weekly</button><button class="back" data-a="tab" data-t="grown">⚙️ Grown-ups</button></div>';
  if(tab!='main'){
-  var c='',ttl={prizes:'Prizes',badges:'Badges',grown:'Grown-ups'}[tab];
+  var c='',ttl={prizes:'Prizes',badges:'Badges',weekly:'Weekly',grown:'Grown-ups'}[tab];
   if(tab=='prizes'){var s=stars(cur);c='<div class="panel"><div class="hf" style="font-size:13px">Star card: '+Math.min(s,70)+' / 70</div><div class="bar">';
    for(var i=1;i<=70;i++)c+='<i class="'+(i<=s?'f':'')+'"></i>';
    c+='</div><div class="rw">';K.rewards.forEach(function(r,i){var need=r[2],ok=s>=need,cl=st.claimed[i];
     c+='<div class="'+(ok&&!cl?'ok':'')+'"><span class="e '+(ok?'':'lk')+'">'+r[0]+'</span>'+need+' stars<br>'+esc(r[1])+'<br>'+(cl?'✅ Claimed':ok?'<button class="btn go" data-a="claim" data-i="'+i+'">Claim!</button>':'🔒')+'</div>'});
    c+='</div>'+(s>=70&&K.rewards.every(function(r,i){return st.claimed[i]})?'<p><button class="btn go" data-a="newcard">Start a new star card</button></p>':'')+'</div>'}
+  else if(tab=='weekly'){c=weeklyHtml(cur)}
   else if(tab=='badges'){c='<div class="panel"><div class="badges">'+badgeDefs(cur).map(function(b){return '<div class="bd'+(st.bd[b[1]]?'':' lk')+'"><span>'+b[0]+'</span>'+b[1]+'</div>'}).join('')+'</div></div><div class="panel" style="margin-top:10px"><div class="hf" style="font-size:13px">Sticker book</div><div class="stk">'+(st.stickers.length?st.stickers.join(' '):'Open daily chests to collect stickers!')+'</div></div>'}
   else{c='<div class="panel"><table><tr><th></th>'+DAYS.map(function(d,i){return '<th class="'+(i==ti?'today':'')+'">'+d+'</th>'}).join('')+'</tr>';
-   K.chores.forEach(function(ch,i){c+='<tr><td class="lbl">'+ch[0]+' '+esc(ch[1])+'</td>';for(var d=0;d<7;d++){var on=st.chores[d+'-'+i];c+='<td><button class="box'+(on?' on':'')+(d>ti&&!on?' dis':'')+'" data-a="chore" data-id="'+d+'-'+i+'" aria-label="'+esc(ch[1])+' '+DAYS[d]+'" aria-pressed="'+!!on+'"></button></td>'}c+='</tr>'});
-   c+='</table></div><div class="panel jar" style="margin-top:10px"><span class="j">🍯</span><div class="g"><div class="hf" style="font-size:12px">Savings jar</div><div class="bar" style="margin:6px 0">'+jarBar(cur)+'</div>$'+money(cur).toFixed(2)+' of $'+st.goal.toFixed(2)+'</div><button class="btn" data-a="pay">Cash out</button></div><div class="foot"><button class="back" data-a="week">New week (clear chores)</button><button class="back" data-a="coin">Set coin value</button><button class="back" data-a="goal">Set jar goal</button></div>'}
+   dayIdx(cur,0).forEach(function(i){var ch=K.chores[i];c+='<tr><td class="lbl">'+ch[0]+' '+esc(ch[1])+'</td>';for(var d=0;d<7;d++){if(ch[2]&&d>=5){c+='<td style="text-align:center;opacity:.35">–</td>';continue}var on=st.chores[d+'-'+i];c+='<td><button class="box'+(on?' on':'')+(d>ti&&!on?' dis':'')+'" data-a="chore" data-id="'+d+'-'+i+'" aria-label="'+esc(ch[1])+' '+DAYS[d]+'" aria-pressed="'+!!on+'"></button></td>'}c+='</tr>'});
+   c+='</table></div><div class="panel jar" style="margin-top:10px"><span class="j">🍯</span><div class="g"><div class="hf" style="font-size:12px">Savings jar</div><div class="bar" style="margin:6px 0">'+jarBar(cur)+'</div>$'+money(cur).toFixed(2)+' of $'+st.goal.toFixed(2)+'</div><button class="btn" data-a="pay">Cash out</button></div><div class="foot"><button class="back" data-a="week">New week (clear chores)</button><button class="back" data-a="coin">Set coin value</button><button class="back" data-a="goal">Set jar goal</button><button class="back" data-a="pin">Change passcode</button></div>'}
   h+='<div class="ov"><div class="ovh"><button class="btn go" data-a="tab" data-t="main">✖ Close</button><span class="hf">'+ttl+'</span></div><div class="ovb">'+c+'</div></div>';
  }
  app.innerHTML=h;
@@ -217,23 +270,29 @@ function render(){
 function jarBar(k){var p=Math.min(10,Math.floor(10*money(k)/S[k].goal)),o='';for(var i=0;i<10;i++)o+='<i class="'+(i<p?'f':'')+'"></i>';return o}
 document.getElementById('app').addEventListener('click',function(e){
  var b=e.target.closest('[data-a]');if(!b)return;var a=b.dataset.a,st=cur&&S[cur];
- if(a=='pick'){cur=b.dataset.k;tab='main'}
- else if(a=='home'){cur=null}
- else if(a=='tab'){tab=b.dataset.t}
+ if(a=='key'){var v=b.dataset.v;if(v=='del')ENT=ENT.slice(0,-1);else if(ENT.length<4)ENT+=v;
+  if(ENT.length==4){var x=ENT;ENT='';if(!S.heath.pin){if(ENT1===null)ENT1=x;else if(ENT1===x){S.heath.pin=ph(x);ENT1=null;save();push('heath');unlock()}else{ENT1=null;toast('Those didn’t match. Try again')}}
+   else if(ph(x)===S.heath.pin)unlock();else toast('Wrong passcode')}
+  render();return}
+ else if(a=='lock'){LOCK=true;UNL=false;cur=null;try{sessionStorage.removeItem('cq-ok')}catch(x){}}
+ else if(a=='pick'){cur=b.dataset.k;tab='main'}
+ else if(a=='home'){cur=null;UNL=false}
+ else if(a=='tab'){var t=b.dataset.t;if(t=='grown'&&!UNL){askPin(function(){UNL=true;tab='grown';render()});return}tab=t;if(t=='main')UNL=false}
  else if(a=='chore'){var id=b.dataset.id,before=Math.floor(xp(cur)/100);
-  if(st.chores[id]){delete st.chores[id];beep(200)}else{st.chores[id]=1;beep(660);burst(e,KIDS[cur].unitIc);speak(cheer());
+  if(st.chores[id]){delete st.chores[id];bump(cur,id,-1);beep(200)}else{st.chores[id]=1;bump(cur,id,1);beep(660);burst(e,KIDS[cur].unitIc);speak(cheer());
    if(Math.floor(xp(cur)/100)>before)toast('Level up! You\u2019re now level '+(Math.floor(xp(cur)/100)+1))}
   save();var sc=window.scrollX;}
- else if(a=='star'){var before=Math.floor(xp(cur)/100);st.stars[+b.dataset.i]++;beep(880);burst(e,'⭐');speak('Kind star! Well done '+KIDS[cur].name);
+ else if(a=='star'){var before=Math.floor(xp(cur)/100);st.stars[+b.dataset.i]++;bumpS(cur,+b.dataset.i,1);beep(880);burst(e,'⭐');speak('Kind star! Well done '+KIDS[cur].name);
   if(Math.floor(xp(cur)/100)>before)toast('Level up!');
   if([10,20,30,40,50,60,70].indexOf(stars(cur))>-1)toast('Reward unlocked! Check Rewards');}
- else if(a=='unstar'){var i=+b.dataset.i;if(st.stars[i]>0)st.stars[i]--}
+ else if(a=='unstar'){var i=+b.dataset.i;if(st.stars[i]>0){st.stars[i]--;bumpS(cur,i,-1)}}
+ else if(a=='pin'){setPin('New 4-digit passcode',function(){toast('Passcode changed')})}
  else if(a=='voice'){VOICE=!VOICE;try{localStorage.setItem('cq-voice',VOICE?1:0)}catch(x){}}
  else if(a=='chest'){var tc=todayIdx();if(!st.opened[tc]){st.opened[tc]=1;var pl=KIDS[cur].stk,sk=pl[Math.floor(Math.random()*pl.length)];st.stickers.push(sk);st.xb=(st.xb||0)+25;burst(e,sk);wow(sk,'You won a sticker and 25 XP!')}}
  else if(a=='claim'){st.claimed[+b.dataset.i]=1;burst(e,'🎉');beep(990);toast('Reward claimed!')}
  else if(a=='newcard'){st.stars=[0,0,0,0,0];st.claimed=[0,0,0,0,0,0,0]}
  else if(a=='pay'){var m=money(cur),kk=cur;if(m>0)dlg('Cash out $'+m.toFixed(2)+'?',null,function(){S[kk].paid+=m;save();render()})}
- else if(a=='week'){var kw=cur;dlg('Clear all chore ticks for a new week? XP and money earned stay banked.',null,function(){var q=S[kw];q.xb=(q.xb||0)+chk(kw)*10+perfect(kw)*20;q.xpBank+=chk(kw)*q.coinVal;q.chores={};q.opened={};save();render();toast('Fresh week started!')})}
+ else if(a=='week'){var kw=cur;dlg('Clear all chore ticks for a new week? XP and money earned stay banked.',null,function(){newWeek(kw);save();render();toast('Fresh week started!')})}
  else if(a=='coin'){var kc=cur;dlg('Money per chore ($)',st.coinVal,function(x){var v=parseFloat(x);if(v>=0){S[kc].coinVal=v;save();render()}})}
  else if(a=='goal'){var kg=cur;dlg('Jar goal ($)',st.goal,function(x){var g=parseFloat(x);if(g>0){S[kg].goal=g;save();render()}})}
  if(cur)award(cur);save();render();
